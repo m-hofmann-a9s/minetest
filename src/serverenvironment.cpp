@@ -667,7 +667,7 @@ void ServerEnvironment::savePlayer(RemotePlayer *player)
 		const auto start_time = porting::getTimeUs();
 		m_player_database->savePlayer(player);
 		const auto end_time = porting::getTimeUs();
-		m_player_save_time_counter->increment(end_time - start_time)
+		m_player_save_time_counter->increment(end_time - start_time);
 	} catch (DatabaseException &e) {
 		errorstream << "Failed to save player " << player->getName() << " exception: "
 			<< e.what() << std::endl;
