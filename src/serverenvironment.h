@@ -511,6 +511,9 @@ private:
 	MetricGaugePtr m_active_block_gauge;
 	MetricGaugePtr m_active_object_gauge;
 
+	MetricCounterPtr m_player_save_time_counter;
+	MetricCounterPtr m_player_load_time_counter;
+
 	std::unique_ptr<ServerActiveObject> createSAO(ActiveObjectType type, v3f pos,
 			const std::string &data);
 };
