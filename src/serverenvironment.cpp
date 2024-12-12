@@ -467,6 +467,11 @@ ServerEnvironment::ServerEnvironment(std::unique_ptr<ServerMap> map,
 
 	m_active_object_gauge = mb->addGauge(
 		"minetest_env_active_objects", "Number of active objects");
+
+	m_player_save_time_counter = mb->addCounter(
+		"minetest_player_save_time", "Time spent saving player data");
+	m_player_load_time_counter = mb->addCounter(
+		"minetest_player_load_time", "Time spent loading player data");
 }
 
 void ServerEnvironment::init()
@@ -659,7 +664,10 @@ void ServerEnvironment::saveLoadedPlayers(bool force)
 void ServerEnvironment::savePlayer(RemotePlayer *player)
 {
 	try {
+		const auto start_time = porting::getTimeUs();
 		m_player_database->savePlayer(player);
+		const auto end_time = porting::getTimeUs();
+		m_player_save_time_counter->increment(end_time - start_time)
 	} catch (DatabaseException &e) {
 		errorstream << "Failed to save player " << player->getName() << " exception: "
 			<< e.what() << std::endl;
@@ -671,8 +679,14 @@ PlayerSAO *ServerEnvironment::loadPlayer(RemotePlayer *player, bool *new_player,
 	session_t peer_id, bool is_singleplayer)
 {
 	auto playersao = std::make_unique<PlayerSAO>(this, player, peer_id, is_singleplayer);
+
+	const auto start_time = porting::getTimeUs();
+	const auto playerloaded = m_player_database->loadPlayer(player, playersao.get());
+	const auto end_time = porting::getTimeUs();
+	m_player_load_time_counter->increment(end_time - start_time);
+
 	// Create player if it doesn't exist
-	if (!m_player_database->loadPlayer(player, playersao.get())) {
+	if (!playerloaded) {
 		*new_player = true;
 		// Set player position
 		infostream << "Server: Finding spawn place for player \""
